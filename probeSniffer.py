@@ -4,23 +4,30 @@ import sys
 import linecache
 
 try:
-    if sys.argv[1] == "":
-        print("[!] Usage: sudo python3 probeSniffer.py <INTERFACE> <ARGUMENTS>\n    Use -h for help.")
-        exit()
+    arg1 = sys.argv[1]
 except:
+    arg1 = ""
+    
+try:
+    arg2 = sys.argv[2]
+except:
+    arg2 = ""
+
+
+if arg1 == "":
     print("[!] Usage: sudo python3 probeSniffer.py <INTERFACE> <ARGUMENTS>\n    Use -h for help.")
     exit()
 
 
-if sys.argv[1] == "-h" or sys.argv[1] == "--help" or sys.argv[1] == "-H" or sys.argv[2] == "-h" or sys.argv[2] == "--help" or sys.argv[2] == "-H":
+if arg1 == "-h" or arg1 == "--help" or arg1 == "-H" or arg2 == "-h" or arg2 == "--help" or arg2 == "-H":
     print("Usage: sudo python3 probeSniffer.py <INTERFACE> <ARGUMENTS>\n\nOptions:\n       -d = Show duplicate requests\n  --nosql = Disable SQL logging completely")
     exit()
 
-if sys.argv[1] == "chopping":
+if arg1 == "chopping":
     while True:
         channel = 1
         while channel <= 12:
-            os.system("iwconfig " + sys.argv[2] + " channel " + str(channel))
+            os.system("iwconfig " + arg2 + " channel " + str(channel))
             print("Channel changed to " + str(channel))
             channel = channel + 1
             time.sleep(5)
@@ -37,13 +44,12 @@ global debugMode
 #DEBUG MODE - At your own risk ;)
 debugMode = False
 
-
-if sys.argv[2] == "--nosql":
+if arg2 == "--nosql":
     noSQL = True
-elif sys.argv[2] == "-D" or sys.argv[2] == "-d":
+elif arg2 == "-D" or arg2 == "-d":
     showDuplicates = True
-else:
-    print("[!] Argument " + sys.argv[2] + " not known. Type -h for help.")
+elif arg2 != "":
+    print("[!] Argument " + arg2 + " not known. Type -h for help.")
     exit()
 
 
@@ -253,13 +259,13 @@ def main():
         setupDB.commit()
         setupDB.close()
 
-    monitor_iface = sys.argv[1]
+    monitor_iface = arg1
     print("[I] Setting '" + monitor_iface + "' to monitor mode...")
     os.system("ifconfig " + monitor_iface + " down; iwconfig " + monitor_iface + " mode monitor; ifconfig " + monitor_iface + " up")
 
     print("[I] Starting channelhopper in screen session...")
     path = os.path.realpath(__file__)
-    os.system("screen -d -m -S probeSniffer-chopping python3 " + path + " chopping " + sys.argv[1])
+    os.system("screen -d -m -S probeSniffer-chopping python3 " + path + " chopping " + arg1)
     print("[I] Saving requests to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     sniff(iface=monitor_iface, prn=PacketHandler)
