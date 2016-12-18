@@ -11,7 +11,7 @@
 
 # requirements:
   * Kali Linux / Raspbian with root privileges<br>
-  * A wireless card and an ethernet adapter / 2 wireless card<br>
+  * A wireless card, capable for monitor mode<br>
   * Python3 (probeSniffer will install the dependenices)
   
 # downloading:
