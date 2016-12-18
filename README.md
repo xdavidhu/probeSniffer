@@ -11,8 +11,8 @@
 
 # requirements:
   * Kali Linux / Raspbian with root privileges<br>
-  * A wireless card, capable for monitor mode<br>
-  * Python3 (probeSniffer will install the dependenices)
+  * Python3 (probeSniffer will install the dependenices)<br>
+  * A wireless card (capable for monitor mode) and one other internet connected interface (for vendor resolve)<br>
   
 # downloading:
   <h3>"git clone https://github.com/xdavidhu/probeSniffer"</h3>
@@ -23,7 +23,7 @@
        and it will ask you to enter your root MySQL credentials to that file!</h3>
   
 # options:
-  * <b>-d</b> / show duplicate requests (defaultly only new requests will be shown)
+  * <b>-d</b> / show duplicate requests (only new requests will be shown by default)
   * <b>--no-sql</b> / disable all MySQL functions (including duplicate checking/logging)
   * <b>-h</b> / display help menu
 
