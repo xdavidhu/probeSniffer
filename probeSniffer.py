@@ -118,6 +118,7 @@ def stop():
         alreadyStopping = True
         print("\n[I] Stopping...")
         os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
+        print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
         print("\n[I] probeSniffer stopped.")
         return
 
@@ -259,6 +260,7 @@ def main():
     print("[I] Starting channelhopper in screen session...")
     path = os.path.realpath(__file__)
     os.system("screen -d -m -S probeSniffer-chopping python3 " + path + " chopping " + sys.argv[1])
+    print("[I] Saving requests to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     sniff(iface=monitor_iface, prn=PacketHandler)
 
@@ -266,7 +268,7 @@ def main():
     if not alreadyStopping:
         print("\n[I] Stopping...")
         os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
-
+        print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
         print("\n[I] probeSniffer stopped.")
 
 if __name__ == "__main__":
