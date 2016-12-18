@@ -19,14 +19,15 @@
   
 # starting:
   <h3>"sudo python3 probeSniffer.py [INTERFACE] [ARGUMENTS]"</h3>
-  <h2> At the first run, probeSniffer will create a config file, named 'pS-config.cfg',<br>
-       and it will ask you to enter your root MySQL credentials to that file!</h2>
-  
+  <h3> At the first run, probeSniffer will create a config file, named 'pS-config.cfg',<br>
+       and it will ask you to enter your root MySQL credentials to that file!</h3>
   
 # options:
   * <b>-d</b> / show duplicate requests (defaultly only new requests will be shown)
   * <b>--no-sql</b> / disable all MySQL functions (including duplicate checking/logging)
   * <b>-h</b> / display help menu
+
+<h3> probeSniffer will save the results to database 'probeSnifferDB' -> table 'probeSniffer'! </h3>
 
 # disclaimer:
   I'm not responsible for anything you do with this program, so please only use it for good and educational purposes.
