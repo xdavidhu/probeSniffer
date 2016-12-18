@@ -72,6 +72,8 @@ if showDuplicates:
 
 print("[I] Installing/Updating dependencies...")
 
+os.system("apt-get update > /dev/null 2>&1")
+os.system("apt-get install python3-pip > /dev/null 2>&1")
 os.system("pip3 install pymysql > /dev/null 2>&1")
 os.system("pip3 install scapy-python3 > /dev/null 2>&1")
 
@@ -171,7 +173,7 @@ def PrintPacket(pkt):
         stop()
         exit()
     except:
-        vendor = "No Vendor (ERROR)"
+        vendor = "No Vendor (INTERNET ERROR)"
     debug("vendor request done")
     try:
         debug("sql duplicate check started")
