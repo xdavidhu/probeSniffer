@@ -5,7 +5,7 @@
     |  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   
     |  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  
     |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| 
-                                                            1.0 by @xdavidhu
+                                                           1.0 by @xdavidhu
 
 <h3>Python program for sniffing unencrypted probe requests and logging them to MySQL.</h3>
 
