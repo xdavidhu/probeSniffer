@@ -24,7 +24,7 @@
   
 # options:
   * <b>-d</b> / show duplicate requests (only new requests will be shown by default)
-  * <b>--no-sql</b> / disable all MySQL functions (including duplicate checking/logging)
+  * <b>--nosql</b> / disable all MySQL functions (including duplicate checking/logging)
   * <b>-h</b> / display help menu
 
 <h3> probeSniffer will save the results to database 'probeSnifferDB' -> table 'probeSniffer'! </h3>
