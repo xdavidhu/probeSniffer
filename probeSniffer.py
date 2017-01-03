@@ -73,7 +73,7 @@ if showDuplicates:
 print("[I] Installing/Updating dependencies...")
 
 os.system("apt-get update > /dev/null 2>&1")
-os.system("apt-get install python3-pip > /dev/null 2>&1")
+os.system("apt-get install python3-pip -y > /dev/null 2>&1")
 os.system("pip3 install pymysql > /dev/null 2>&1")
 os.system("pip3 install scapy-python3 > /dev/null 2>&1")
 
@@ -126,7 +126,8 @@ def stop():
         alreadyStopping = True
         print("\n[I] Stopping...")
         os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
-        print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
+        if not noSQL:
+            print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
         print("\n[I] probeSniffer stopped.")
         return
 
@@ -276,7 +277,8 @@ def main():
     if not alreadyStopping:
         print("\n[I] Stopping...")
         os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
-        print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
+        if not noSQL:
+            print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
         print("\n[I] probeSniffer stopped.")
 
 if __name__ == "__main__":
