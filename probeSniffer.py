@@ -1,7 +1,13 @@
 import os
 import time
 import sys
-import linecache
+import sqlite3
+import threading
+import logging
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.all import *
+import datetime
+import urllib.request as urllib2
 
 try:
     arg1 = sys.argv[1]
@@ -13,33 +19,17 @@ try:
 except:
     arg2 = ""
 
-
 if arg1 == "":
     print("[!] Usage: sudo python3 probeSniffer.py <INTERFACE> <ARGUMENTS>\n    Use -h for help.")
     exit()
-
 
 if arg1 == "-h" or arg1 == "--help" or arg1 == "-H" or arg2 == "-h" or arg2 == "--help" or arg2 == "-H":
     print("Usage: sudo python3 probeSniffer.py <INTERFACE> <ARGUMENTS>\n\nOptions:\n       -d = Show duplicate requests\n  --nosql = Disable SQL logging completely")
     exit()
 
-if arg1 == "chopping":
-    while True:
-        channel = 1
-        while channel <= 12:
-            os.system("iwconfig " + arg2 + " channel " + str(channel))
-            print("Channel changed to " + str(channel))
-            channel = channel + 1
-            time.sleep(5)
-
-global showDuplicates
 showDuplicates = False
-global noSQL
 noSQL = False
-global alreadyStopping
 alreadyStopping = False
-
-global debugMode
 
 #DEBUG MODE - At your own risk ;)
 debugMode = False
@@ -60,80 +50,56 @@ print(" ____  ____   ___  ____    ___ _________  ____ _____ _____  ___ ____    \
       "|  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   \n" +
       "|  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  \n" +
       "|__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| \n" +
-      "                                                       1.0 by @xdavidhu \n")
+      "                                                       2.0 by @xdavidhu \n")
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 script_path = script_path + "/"
+
+monitor_iface = arg1
 
 if noSQL:
     print("[I] NO-SQL MODE!\n")
 if showDuplicates:
     print("[I] Showing duplicates...\n")
 
-print("[I] Installing/Updating dependencies...")
-
-os.system("apt-get update > /dev/null 2>&1")
-os.system("apt-get install python3-pip -y > /dev/null 2>&1")
-os.system("pip3 install pymysql > /dev/null 2>&1")
-os.system("pip3 install scapy-python3 > /dev/null 2>&1")
-
-import logging
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-from scapy.all import *
-import pymysql
-import datetime
-import urllib.request as urllib2
-
 PROBE_REQUEST_TYPE = 0
 PROBE_REQUEST_SUBTYPE = 4
 
 if not noSQL:
-    global sqlIP
-    global sqlUser
-    global sqlPass
-
-    #CONFIG CREATION
-    try:
-        cfg = open(script_path+"pS-config.cfg", 'r')
-    except:
-        raw_conf = "#probeSniffer SQL config file - please enter root credentials\n\nSQL IP (localhost) = \nSQL User           = \nSQL Pass           = "
-        os.system("sudo echo -e '" + raw_conf + "' > "+script_path+"pS-config.cfg")
-        print("\n[!] Config file '"+script_path+"pS-config.cfg' created. Please\n    enter your SQL credentials, "
-              "and start probeSniffer again...\n")
-        exit()
-
-    #GETTING THE CREDS FROM CONFIG
-    sqlIP = linecache.getline(script_path+"pS-config.cfg", 3)
-    sqlIP = sqlIP.replace("SQL IP (localhost) = ", "")
-    sqlIP = sqlIP.replace("\n", "")
-    if sqlIP == "":
-        sqlIP = "localhost"
-
-    sqlUser = linecache.getline(script_path+"pS-config.cfg", 4)
-    sqlUser = sqlUser.replace("SQL User           = ", "")
-    sqlUser = sqlUser.replace("\n", "")
-
-    sqlPass = linecache.getline(script_path+"pS-config.cfg", 5)
-    sqlPass = sqlPass.replace("SQL Pass           = ", "")
-    sqlPass = sqlPass.replace("\n", "")
+    # nosql
+    pass
 
 
 def stop():
-    debug("stoping called")
     global alreadyStopping
+    debug("stoping called")
     if not alreadyStopping:
         debug("setting stopping to true")
         alreadyStopping = True
         print("\n[I] Stopping...")
-        os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
         if not noSQL:
-            print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
+            print("[I] Results saved to 'DB-probeSniffer.db'")
         print("\n[I] probeSniffer stopped.")
         return
+
 
 def debug(msg):
     if debugMode:
         print("[DEBUG] " + msg)
+
+def chopping():
+    while True:
+        if not alreadyStopping:
+            channel = 1
+            while channel <= 12:
+                os.system("iwconfig " + monitor_iface + " channel " + str(channel))
+                debug("[CHOPPER] HI IM RUNNING THIS COMMAND: " + "iwconfig " + monitor_iface + " channel " + str(channel))
+                debug("[CHOPPER] HI I CHANGED CHANNEL TO " + str(channel))
+                channel = channel + 1
+                time.sleep(5)
+        else:
+            debug("[CHOPPER] IM STOPPING TOO")
+            sys.exit()
 
 def PacketHandler(pkt):
     debug("packethandler - called")
@@ -158,8 +124,11 @@ def PrintPacket(pkt):
     debug("printpacket started")
     ssid = pkt.getlayer(Dot11ProbeReq).info.decode("utf-8")
     if ssid == "":
+        nossid = True
         debug("no ssid in request... skipping")
-        return
+        debug(str(pkt.addr2) + " " + str(pkt.addr1))
+    else:
+        nossid = False
     print_source = pkt.addr2
     url = "https://macvendors.co/api/vendorname/"
     # Mac address to lookup vendor from
@@ -176,48 +145,54 @@ def PrintPacket(pkt):
     except:
         vendor = "No Vendor (INTERNET ERROR)"
     debug("vendor request done")
-    try:
-        debug("sql duplicate check started")
-        if not noSQL:
-            if not checkSQLDuplicate(ssid, mac_address):
-                debug("not duplicate")
-                debug("saving to sql")
-                saveToMYSQL(mac_address, vendor, ssid)
-                debug("saved to sql")
-                print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+    if not nossid:
+        try:
+            debug("sql duplicate check started")
+            if not noSQL:
+                if not checkSQLDuplicate(ssid, mac_address):
+                    debug("not duplicate")
+                    debug("saving to sql")
+                    saveToMYSQL(mac_address, vendor, ssid)
+                    debug("saved to sql")
+                    print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+                else:
+                    if showDuplicates:
+                        debug("duplicate")
+                        print("[D] " + print_source + " (" + vendor + ")  ==> '" + ssid + "'")
             else:
-                if showDuplicates:
-                    debug("duplicate")
-                    print("[D] " + print_source + " (" + vendor + ")  ==> '" + ssid + "'")
-        else:
-            print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
-    except KeyboardInterrupt:
-        stop()
-        exit()
-    except:
-        pass
+                print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+        except KeyboardInterrupt:
+            stop()
+            exit()
+        except:
+            pass
+    else:
+        print(print_source + " (" + vendor + ")  ==> BROADCAST")
 
 def SQLConncetor():
     try:
         debug("sqlconnector called")
         global db
-        db = pymysql.connect(sqlIP, sqlUser, sqlPass, "probeSnifferDB")
+        db = sqlite3.connect("DB-probeSniffer.db")
         cursor = db.cursor()
         return cursor
     except KeyboardInterrupt:
         stop()
         exit()
     except:
+        debug("[!!!] CRASH IN SQLConncetor")
+        print(traceback.format_exc())
         pass
 
 def checkSQLDuplicate(ssid, mac_add):
     try:
-        debug("checkSQLDuplicate called")
+        debug("[1] checkSQLDuplicate called")
         cursor = SQLConncetor()
-        cursor.execute("select count(*) from probeSniffer where ssid = %s and mac_address = %s", (ssid, mac_add))
+        cursor.execute("select count(*) from probeSniffer where ssid = ? and mac_address = ?", (ssid, mac_add))
         data = cursor.fetchall()
         data = str(data)
-        if data == "((0,),)":
+        debug("[2] checkSQLDuplicate data: " + str(data))
+        if data == "[(0,)]":
             db.close()
             return False
         else:
@@ -227,7 +202,10 @@ def checkSQLDuplicate(ssid, mac_add):
         stop()
         exit()
     except:
+        debug("[!!!] CRASH IN checkSQLDuplicate")
+        print(traceback.format_exc())
         pass
+
 
 def saveToMYSQL(mac_add, vendor, ssid):
     try:
@@ -235,50 +213,47 @@ def saveToMYSQL(mac_add, vendor, ssid):
         cursor = SQLConncetor()
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("INSERT INTO probeSniffer VALUES (%s, %s, %s, %s)", (mac_add, vendor, ssid, st))
+        cursor.execute("INSERT INTO probeSniffer VALUES (?, ?, ?, ?)", (mac_add, vendor, ssid, st))
         db.commit()
         db.close()
     except KeyboardInterrupt:
         stop()
         exit()
     except:
+        debug("[!!!] CRASH IN saveToMYSQL")
+        print(traceback.format_exc())
         pass
 
 def main():
 
     if not noSQL:
-        print("[I] Setting up MySQL...")
+        print("[I] Setting up SQLite...")
 
         try:
-            setupDB = pymysql.connect(sqlIP, sqlUser, sqlPass)
+            setupDB = sqlite3.connect("DB-probeSniffer.db")
         except:
-            print("\n[!] Cant connect/login to MySQL. Incorrect credentials?\n")
+            print("\n[!] Cant connect to database. Permission error?\n")
             exit()
         setupCursor = setupDB.cursor()
-        setupCursor.execute("SET sql_notes = 0")
-        setupCursor.execute("CREATE DATABASE IF NOT EXISTS probeSnifferDB")
-        setupCursor.execute("CREATE TABLE IF NOT EXISTS probeSnifferDB.probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50),date VARCHAR(50))")
-        setupCursor.execute("SET sql_notes = 1")
+        setupCursor.execute("CREATE TABLE IF NOT EXISTS probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50),date VARCHAR(50))")
         setupDB.commit()
         setupDB.close()
 
-    monitor_iface = arg1
-    print("[I] Setting '" + monitor_iface + "' to monitor mode...")
-    os.system("ifconfig " + monitor_iface + " down; iwconfig " + monitor_iface + " mode monitor; ifconfig " + monitor_iface + " up")
-
-    print("[I] Starting channelhopper in screen session...")
+    print("[I] Starting channelhopper in a new thread...")
     path = os.path.realpath(__file__)
-    os.system("screen -d -m -S probeSniffer-chopping python3 " + path + " chopping " + arg1)
-    print("[I] Saving requests to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
+    chopper = threading.Thread(target=chopping)
+    chopper.daemon = True
+    chopper.start()
+
+    print("[I] Saving requests to 'DB-probeSniffer.db'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     sniff(iface=monitor_iface, prn=PacketHandler)
 
     global alreadyStopping
     if not alreadyStopping:
         print("\n[I] Stopping...")
-        os.system("sudo screen -S probeSniffer-chopping -X stuff '^C\n'")
         if not noSQL:
-            print("[I] Results saved to MySQL: 'probeSnifferDB' -> 'probeSniffer'")
+            print("[I] Results saved to 'DB-probeSniffer.db'")
         print("\n[I] probeSniffer stopped.")
 
 if __name__ == "__main__":
