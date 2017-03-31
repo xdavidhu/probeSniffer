@@ -5,29 +5,56 @@
     |  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   
     |  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  
     |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| 
-                                                           1.0 by @xdavidhu
+                                                           2.0 by @xdavidhu
 
-<h3>Python program for sniffing unencrypted probe requests and logging them to MySQL.</h3>
+<h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
+
+# new in 2.0:
+  * Logging to SQLite database file<br>
+  * Settable nickname for mac addresses<br>
+  * Options to filter output by mac address<br>
+  * Capturing 'boradcast' probe requests (without ssid)<br>
 
 # requirements:
   * Kali Linux / Raspbian with root privileges<br>
-  * Python3 (probeSniffer will install the dependenices)<br>
+  * Python3 & PIP3 (probeSniffer will install the dependenices)<br>
   * A wireless card (capable for monitor mode) and one other internet connected interface (for vendor resolve)<br>
-  
-# downloading:
-  <h3>"git clone https://github.com/xdavidhu/probeSniffer"</h3>
-  
-# starting:
-  <h3>"sudo python3 probeSniffer.py [INTERFACE] [ARGUMENTS]"</h3>
-  <h3> At the first run, probeSniffer will create a config file, named 'pS-config.cfg',<br>
-       and it will ask you to enter your root MySQL credentials to that file!</h3>
-  
-# options:
-  * <b>-d</b> / show duplicate requests (only new requests will be shown by default)
-  * <b>--nosql</b> / disable all MySQL functions (including duplicate checking/logging)
-  * <b>-h</b> / display help menu
 
-<h3> probeSniffer will save the results to database 'probeSnifferDB' -> table 'probeSniffer'! </h3>
+# options:
+  * <b>-d</b> / do not show duplicate requests<br>
+  * <b>-b</b> / do not show broadcast requests<br>
+  * <b>--addnicks</b> /﻿add nicknames to mac addresses<br>
+  * <b>--flushnicks</b> / flush nickname database<br>
+  * <b>--nosql</b> / disable SQL logging completely<br>
+  * <b>--debug</b> / turn debug mode on<br>
+  * <b>-h</b> / display help menu<br>
+
+# installing:
+
+  <h3>Debian based systems:</h3>
+
+```
+$ sudo apt-get update && sudo apt-get install python3 python3-pip -y
+
+$ git clone https://github.com/xdavidhu/probeSniffer
+
+$ cd probeSniffer/
+
+$ python3 -m pip install -r requirements.txt
+```
+
+  <h3>macOS / OSX:</h3>
+
+```
+$ brew install python3
+
+$ git clone https://github.com/xdavidhu/probeSniffer
+
+$ cd probeSniffer/
+
+$ python3 -m pip install -r requirements.txt
+```
+**NOTE**: You need to have [Homebrew](http://brew.sh/) installed before running the macOS/OSX installation.<br>
 
 # disclaimer:
   I'm not responsible for anything you do with this program, so please only use it for good and educational purposes.
