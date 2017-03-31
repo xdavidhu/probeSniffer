@@ -62,7 +62,7 @@ print(" ____  ____   ___  ____    ___ _________  ____ _____ _____  ___ ____    \
       "|  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   \n" +
       "|  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  \n" +
       "|__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| \n" +
-      "                                        v2.0 by David Schütz (@xdavidhu)\n")
+      "                                       v2.0 by David Schütz (@xdavidhu) \n")
 
 print("[W] Make sure to use an interface in monitor mode!\n")
 
