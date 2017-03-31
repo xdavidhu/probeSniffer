@@ -5,7 +5,7 @@
     |  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   
     |  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  
     |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| 
-                                                           2.0 by @xdavidhu
+                                           v2.0 by David Schütz (@xdavidhu)
 
 <h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
 
