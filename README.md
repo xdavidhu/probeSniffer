@@ -6,7 +6,10 @@
     |  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  
     |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| 
                                            v2.0 by David Schütz (@xdavidhu)
-
+[![Build Status](https://travis-ci.org/xdavidhu/probeSniffer.svg?branch=master)](https://travis-ci.org/xdavidhu/probeSniffer)
+[![Compatibility](https://img.shields.io/badge/python-3.3%2C%203.4%2C%203.5%2C%203.6-brightgreen.svg)](https://github.com/xdavidhu/probeSniffer)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/xdavidhu/probeSniffer/blob/master/LICENSE)
+[![Stars](https://img.shields.io/github/stars/xdavidhu/probeSniffer.svg)](https://github.com/xdavidhu/probeSniffer)
 <h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
 
 # new in 2.0:
@@ -56,6 +59,7 @@ $ cd probeSniffer/
 $ python3 -m pip install -r requirements.txt
 ```
 **NOTE**: You need to have [Homebrew](http://brew.sh/) installed before running the macOS/OSX installation.<br>
+**WARNING**: portSpider is only compatible with Python 3.3 & 3.4 & 3.5 & 3.6
 
 # disclaimer:
   I'm not responsible for anything you do with this program, so please only use it for good and educational purposes.
