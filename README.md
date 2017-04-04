@@ -23,6 +23,7 @@
 # options:
   * <b>-d</b> / do not show duplicate requests<br>
   * <b>-b</b> / do not show broadcast requests<br>
+  * <b>-f</b> / only show requests from the specified mac address<br>
   * <b>--addnicks</b> /﻿add nicknames to mac addresses<br>
   * <b>--flushnicks</b> / flush nickname database<br>
   * <b>--nosql</b> / disable SQL logging completely<br>
