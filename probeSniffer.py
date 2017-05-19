@@ -61,6 +61,15 @@ monitor_iface = args.interface
 
 alreadyStopping = False
 
+def restart_line():
+    sys.stdout.write('\r')
+    sys.stdout.flush()
+
+def statusWidget(devices):
+    sys.stdout.write("Devices found: [" + str(devices) + "]")
+    restart_line()
+    sys.stdout.flush()
+
 print(" ____  ____   ___  ____    ___ _________  ____ _____ _____  ___ ____    \n" +
       "|    \|    \ /   \|    \  /  _/ ___|    \|    |     |     |/  _|    \   \n" +
       "|  o  |  D  |     |  o  )/  [(   \_|  _  ||  ||   __|   __/  [_|  D  )  \n" +
@@ -68,10 +77,11 @@ print(" ____  ____   ___  ____    ___ _________  ____ _____ _____  ___ ____    \
       "|  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   \n" +
       "|  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  \n" +
       "|__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| \n" +
-      "                                       v2.0 by David Schütz (@xdavidhu) \n")
+      "                                       v2.1 by David Schütz (@xdavidhu) \n")
 
 print("[W] Make sure to use an interface in monitor mode!\n")
 
+devices = []
 script_path = os.path.dirname(os.path.realpath(__file__))
 script_path = script_path + "/"
 
@@ -129,9 +139,25 @@ def chopping():
             debug("[CHOPPER] IM STOPPING TOO")
             sys.exit()
 
+def sniffer():
+    global alreadyStopping
+    while True:
+        if not alreadyStopping:
+            try:
+                debug("[SNIFFER] HI I STARTED TO SNIFF")
+                sniff(iface=monitor_iface, prn=PacketHandler)
+            except:
+                print("[!] An error occurred. Debug:")
+                print(traceback.format_exc())
+                print("[!] Restarting in 5 sec... Press CTRL + C to stop.")
+                time.sleep(5)
+        else:
+            debug("[SNIFFER] IM STOPPING TOO")
+            sys.exit()
+
 def PacketHandler(pkt):
-    debug("packethandler - called")
     try:
+        debug("packethandler - called")
         if pkt.haslayer(Dot11):
             debug("packethandler - pkt.haslayer(Dot11)")
             if pkt.type == PROBE_REQUEST_TYPE and pkt.subtype == PROBE_REQUEST_SUBTYPE:
@@ -149,6 +175,7 @@ def PacketHandler(pkt):
         pass
 
 def PrintPacket(pkt):
+    statusWidget(len(devices))
     debug("printpacket started")
     ssid = pkt.getlayer(Dot11ProbeReq).info.decode("utf-8")
     if ssid == "":
@@ -172,6 +199,12 @@ def PrintPacket(pkt):
         exit()
     except:
         vendor = "No Vendor (INTERNET ERROR)"
+    inDevices = False
+    for device in devices:
+        if device == mac_address:
+            inDevices = True
+    if not inDevices:
+        devices.append(mac_address)
     debug("vendor request done")
     nickname = getNickname(print_source)
     if filterMode:
@@ -187,21 +220,21 @@ def PrintPacket(pkt):
                     saveToMYSQL(mac_address, vendor, ssid)
                     debug("saved to sql")
                     if nickname == False:
-                        print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+                        print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
                     else:
-                        print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ")  ==> '" + ssid + "'")
+                        print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
                 else:
                     if showDuplicates:
                         debug("duplicate")
                         if nickname == False:
-                            print("[D] " + print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+                            print("[D] " + print_source + " (" + vendor + ") ==> '" + ssid + "'")
                         else:
-                            print("[D] " + print_source + " [" + str(nickname) + "]" + " (" + vendor + ")  ==> '" + ssid + "'")
+                            print("[D] " + print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
             else:
                 if nickname == False:
-                    print(print_source + " (" + vendor + ")  ==> '" + ssid + "'")
+                    print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
                 else:
-                    print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ")  ==> '" + ssid + "'")
+                    print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
         except KeyboardInterrupt:
             stop()
             exit()
@@ -210,9 +243,10 @@ def PrintPacket(pkt):
     else:
         if showBroadcasts:
             if nickname == False:
-                print(print_source + " (" + vendor + ")  ==> BROADCAST")
+                print(print_source + " (" + vendor + ") ==> BROADCAST")
             else:
-                print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ")  ==> BROADCAST")
+                print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> BROADCAST")
+    statusWidget(len(devices))
 
 def SQLConncetor():
     try:
@@ -337,16 +371,31 @@ def main():
     chopper.start()
     print("[I] Saving requests to 'DB-probeSniffer.db'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
+    statusWidget(len(devices))
+    snifferthread = threading.Thread(target=sniffer)
+    snifferthread.daemon = True
+    snifferthread.start()
     try:
-        sniff(iface=monitor_iface, prn=PacketHandler)
+        while not alreadyStopping:
+            pass
     except KeyboardInterrupt:
-        pass
-    except OSError:
         alreadyStopping = True
+        print("\n[I] Stopping...")
+        if not noSQL:
+            print("[I] Results saved to 'DB-probeSniffer.db'")
+        print("\n[I] probeSniffer stopped.")
+    except OSError:
         print("[!] An error occurred. Debug:")
         print(traceback.format_exc())
-        print("\n[I] probeSniffer stopped.")
-        exit(1)
+        print("[!] Restarting in 5 sec... Press CTRL + C to stop.")
+        try:
+            time.sleep(5)
+        except:
+            alreadyStopping = True
+            print("\n[I] Stopping...")
+            if not noSQL:
+                print("[I] Results saved to 'DB-probeSniffer.db'")
+            print("\n[I] probeSniffer stopped.")
 
     if not alreadyStopping:
         print("\n[I] Stopping...")
