@@ -13,9 +13,9 @@
 <h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
 
 # new in 2.1:
+  * Displaying the number of hosts<br>
   * Logging to SQLite database file<br>
   * Settable nickname for mac addresses<br>
-  * Displaying the number of hosts found<br>
   * Options to filter output by mac address<br>
   * Capturing 'boradcast' probe requests (without ssid)<br>
 
