@@ -28,7 +28,7 @@
   * <b>-d</b> / do not show duplicate requests<br>
   * <b>-b</b> / do not show broadcast requests<br>
   * <b>-f</b> / only show requests from the specified mac address<br>
-  * <b>--addnicks</b> /﻿add nicknames to mac addresses<br>
+  * <b>--addnicks</b> / add nicknames to mac addresses<br>
   * <b>--flushnicks</b> / flush nickname database<br>
   * <b>--nosql</b> / disable SQL logging completely<br>
   * <b>--debug</b> / turn debug mode on<br>
@@ -36,7 +36,7 @@
 
 # installing:
 
-  <h3>Debian based systems:</h3>
+  <h3>Kali Linux / Raspbian:</h3>
 
 ```
 $ sudo apt-get update && sudo apt-get install python3 python3-pip -y
@@ -47,20 +47,12 @@ $ cd probeSniffer/
 
 $ python3 -m pip install -r requirements.txt
 ```
+**WARNING**: probeSniffer is only compatible with Python 3.3 & 3.4 & 3.5 & 3.6
 
-  <h3>macOS / OSX:</h3>
+# usage:
+**Make sure to put your interface into monitor mode before**</br>
 
-```
-$ brew install python3
-
-$ git clone https://github.com/xdavidhu/probeSniffer
-
-$ cd probeSniffer/
-
-$ python3 -m pip install -r requirements.txt
-```
-**NOTE**: You need to have [Homebrew](http://brew.sh/) installed before running the macOS/OSX installation.<br>
-**WARNING**: portSpider is only compatible with Python 3.3 & 3.4 & 3.5 & 3.6
+    $ sudo python3 probeSniffer.py [monitor-mode-interface] [options]
 
 # disclaimer:
   I'm not responsible for anything you do with this program, so please only use it for good and educational purposes.
