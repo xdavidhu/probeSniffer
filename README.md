@@ -50,7 +50,7 @@ $ python3 -m pip install -r requirements.txt
 **WARNING**: probeSniffer is only compatible with Python 3.3 & 3.4 & 3.5 & 3.6
 
 # usage:
-**Make sure to put your interface into monitor mode before**</br>
+**Make sure to put your interface into monitor mode before!**</br>
 
     $ sudo python3 probeSniffer.py [monitor-mode-interface] [options]
 
