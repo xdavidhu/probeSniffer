@@ -103,6 +103,9 @@ if showBroadcasts == False:
 if filterMode == True:
     externalOptionsSet = True
     print("[I] Only showing requests from '" + filterMac + "'.")
+if saveDuplicates == True:
+    externalOptionsSet = True
+    print("[I] Saving duplicates to SQL...")
 if externalOptionsSet:
     print()
 
