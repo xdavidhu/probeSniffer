@@ -145,7 +145,7 @@ def sniffer():
         if not alreadyStopping:
             try:
                 debug("[SNIFFER] HI I STARTED TO SNIFF")
-                sniff(iface=monitor_iface, prn=PacketHandler)
+                sniff(iface=monitor_iface, prn=PacketHandler, store=0)
             except:
                 print("[!] An error occurred. Debug:")
                 print(traceback.format_exc())
