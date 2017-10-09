@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(usage="probeSniffer.py interface [-h] [-d] [-b]
 parser.add_argument("interface", help='Interface (in monitor mode) for capturing the packets')
 parser.add_argument("-d", action='store_true', help='do not show duplicate requests')
 parser.add_argument("-b", action='store_true', help='do not show \'broadcast\' requests (without ssid)')
+parser.add_argument("-a", action='store_true', help='save duplicate requests to SQL')
 parser.add_argument("-f", type=str, help='only show requests from the specified mac address')
 parser.add_argument("--nosql", action='store_true', help='disable SQL logging completely')
 parser.add_argument("--addnicks", action='store_true', help='add nicknames to mac addresses')
@@ -56,6 +57,10 @@ if args.f != None:
     filterMac = args.f
 else:
     filterMode = False
+if args.a:
+    saveDuplicates = True
+else:
+    saveDuplicates = False
 
 monitor_iface = args.interface
 
@@ -224,6 +229,11 @@ def PrintPacket(pkt):
                     else:
                         print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
                 else:
+                    if saveDuplicates:
+                        debug("saveDuplicates on")
+                        debug("saving to sql")
+                        saveToMYSQL(mac_address, vendor, ssid)
+                        debug("saved to sql")
                     if showDuplicates:
                         debug("duplicate")
                         if nickname == False:
