@@ -46,7 +46,7 @@ flushNicks = args.flushnicks
 debugMode = args.debug
 saveDuplicates = args.a
 filterMode = args.f != None
-rssi = args.r
+rssi = args.rssi
 if args.f != None:
     filterMac = args.f
 
