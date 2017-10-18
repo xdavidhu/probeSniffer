@@ -228,11 +228,7 @@ def PrintPacket(pkt):
                     debug("saving to sql")
                     saveToMYSQL(mac_address, vendor, ssid, rssi_val)
                     debug("saved to sql")
-                    if not nickname:
-                        print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
-                    else:
-                        print(
-                            print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
                 else:
                     if saveDuplicates:
                         debug("saveDuplicates on")
@@ -241,18 +237,9 @@ def PrintPacket(pkt):
                         debug("saved to sql")
                     if showDuplicates:
                         debug("duplicate")
-                        if not nickname:
-                            print("[D] " + print_source +
-                                  " (" + vendor + ") ==> '" + ssid + "'")
-                        else:
-                            print("[D] " + print_source + " [" + str(nickname) +
-                                  "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                        print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
             else:
-                if not nickname:
-                    print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
-                else:
-                    print(print_source + " [" + str(nickname) +
-                          "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
         except KeyboardInterrupt:
             stop()
             exit()
@@ -260,11 +247,7 @@ def PrintPacket(pkt):
             pass
     else:
         if showBroadcasts:
-            if not nickname:
-                print(print_source + " (" + vendor + ") ==> BROADCAST")
-            else:
-                print(print_source + " [" + str(nickname) +
-                      "]" + " (" + vendor + ") ==> BROADCAST")
+            print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
     statusWidget(len(devices))
 
 
