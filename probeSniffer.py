@@ -13,67 +13,57 @@ import datetime
 import urllib.request as urllib2
 import argparse
 
-parser = argparse.ArgumentParser(usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
-parser.add_argument("interface", help='Interface (in monitor mode) for capturing the packets')
-parser.add_argument("-d", action='store_true', help='do not show duplicate requests')
-parser.add_argument("-b", action='store_true', help='do not show \'broadcast\' requests (without ssid)')
-parser.add_argument("-a", action='store_true', help='save duplicate requests to SQL')
-parser.add_argument("-f", type=str, help='only show requests from the specified mac address')
-parser.add_argument("--nosql", action='store_true', help='disable SQL logging completely')
-parser.add_argument("--addnicks", action='store_true', help='add nicknames to mac addresses')
-parser.add_argument("--flushnicks", action='store_true', help='flush nickname database')
+parser = argparse.ArgumentParser(
+    usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
+parser.add_argument(
+    "interface", help='Interface (in monitor mode) for capturing the packets')
+parser.add_argument("-d", action='store_true',
+                    help='do not show duplicate requests')
+parser.add_argument("-b", action='store_true',
+                    help='do not show \'broadcast\' requests (without ssid)')
+parser.add_argument("-a", action='store_true',
+                    help='save duplicate requests to SQL')
+parser.add_argument(
+    "-f", type=str, help='only show requests from the specified mac address')
+parser.add_argument("--nosql", action='store_true',
+                    help='disable SQL logging completely')
+parser.add_argument("--addnicks", action='store_true',
+                    help='add nicknames to mac addresses')
+parser.add_argument("--flushnicks", action='store_true',
+                    help='flush nickname database')
 parser.add_argument("--debug", action='store_true', help='turn debug mode on')
+parser.add_argument('-r', '--rssi', action='store_true',
+                    help="include rssi in output")
 if len(sys.argv) == 1:
     parser.print_help()
     sys.exit(1)
 args = parser.parse_args()
-
-if args.d:
-    showDuplicates = False
-else:
-    showDuplicates = True
-if args.b:
-    showBroadcasts = False
-else:
-    showBroadcasts = True
-if args.nosql:
-    noSQL = True
-else:
-    noSQL = False
-if args.addnicks:
-    addNicks = True
-else:
-    addNicks = False
-if args.flushnicks:
-    flushNicks = True
-else:
-    flushNicks = False
-if args.debug:
-    debugMode = True
-else:
-    debugMode = False
+showDuplicates = not args.d
+showBroadcasts = not args.b
+noSQL = args.nosql
+addNicks = args.addnicks
+flushNicks = args.flushnicks
+debugMode = args.debug
+saveDuplicates = args.a
+filterMode = args.f != None
+rssi = args.rssi
 if args.f != None:
-    filterMode = True
     filterMac = args.f
-else:
-    filterMode = False
-if args.a:
-    saveDuplicates = True
-else:
-    saveDuplicates = False
 
 monitor_iface = args.interface
-
 alreadyStopping = False
+
 
 def restart_line():
     sys.stdout.write('\r')
     sys.stdout.flush()
 
+
 def statusWidget(devices):
     sys.stdout.write("Devices found: [" + str(devices) + "]")
     restart_line()
     sys.stdout.flush()
+
 
 print(" ____  ____   ___  ____    ___ _________  ____ _____ _____  ___ ____    \n" +
       "|    \|    \ /   \|    \  /  _/ ___|    \|    |     |     |/  _|    \   \n" +
@@ -94,16 +84,16 @@ externalOptionsSet = False
 if noSQL:
     externalOptionsSet = True
     print("[I] NO-SQL MODE!")
-if showDuplicates == False:
+if  not showDuplicates:
     externalOptionsSet = True
     print("[I] Not showing duplicates...")
-if showBroadcasts == False:
+if not showBroadcasts:
     externalOptionsSet = True
     print("[I] Not showing broadcasts...")
-if filterMode == True:
+if filterMode:
     externalOptionsSet = True
     print("[I] Only showing requests from '" + filterMac + "'.")
-if saveDuplicates == True:
+if saveDuplicates:
     externalOptionsSet = True
     print("[I] Saving duplicates to SQL...")
 if externalOptionsSet:
@@ -129,23 +119,28 @@ def stop():
         print("\n[I] probeSniffer stopped.")
         return
 
+
 def debug(msg):
     if debugMode:
         print("[DEBUG] " + msg)
+
 
 def chopping():
     while True:
         if not alreadyStopping:
             channel = 1
             while channel <= 12:
-                os.system("iwconfig " + monitor_iface + " channel " + str(channel) + " > /dev/null 2>&1")
-                debug("[CHOPPER] HI IM RUNNING THIS COMMAND: " + "iwconfig " + monitor_iface + " channel " + str(channel))
+                os.system("iwconfig " + monitor_iface + " channel " +
+                          str(channel) + " > /dev/null 2>&1")
+                debug("[CHOPPER] HI IM RUNNING THIS COMMAND: " +
+                      "iwconfig " + monitor_iface + " channel " + str(channel))
                 debug("[CHOPPER] HI I CHANGED CHANNEL TO " + str(channel))
                 channel = channel + 1
                 time.sleep(5)
         else:
             debug("[CHOPPER] IM STOPPING TOO")
             sys.exit()
+
 
 def sniffer():
     global alreadyStopping
@@ -162,6 +157,7 @@ def sniffer():
         else:
             debug("[SNIFFER] IM STOPPING TOO")
             sys.exit()
+
 
 def PacketHandler(pkt):
     try:
@@ -180,12 +176,16 @@ def PacketHandler(pkt):
         debug("packethandler - exception")
         stop()
         exit()
-        pass
+
 
 def PrintPacket(pkt):
     statusWidget(len(devices))
     debug("printpacket started")
     ssid = pkt.getlayer(Dot11ProbeReq).info.decode("utf-8")
+    rssi_val = None
+    if rssi:
+        rssi_val = -(256 - ord(pkt.notdecoded[-4:-3]))
+        debug("rssi value: " + str(rssi_val))
     if ssid == "":
         nossid = True
         debug("no ssid in request... skipping")
@@ -198,7 +198,8 @@ def PrintPacket(pkt):
     mac_address = print_source
     try:
         debug("url request started")
-        request = urllib2.Request(url + mac_address, headers={'User-Agent': "API Browser"})
+        request = urllib2.Request(
+            url + mac_address, headers={'User-Agent': "API Browser"})
         response = urllib2.urlopen(request)
         vendor = response.read()
         vendor = vendor.decode("utf-8")
@@ -225,29 +226,20 @@ def PrintPacket(pkt):
                 if not checkSQLDuplicate(ssid, mac_address):
                     debug("not duplicate")
                     debug("saving to sql")
-                    saveToMYSQL(mac_address, vendor, ssid)
+                    saveToMYSQL(mac_address, vendor, ssid, rssi_val)
                     debug("saved to sql")
-                    if nickname == False:
-                        print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
-                    else:
-                        print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
                 else:
                     if saveDuplicates:
                         debug("saveDuplicates on")
                         debug("saving to sql")
-                        saveToMYSQL(mac_address, vendor, ssid)
+                        saveToMYSQL(mac_address, vendor, ssid, rssi_val)
                         debug("saved to sql")
                     if showDuplicates:
                         debug("duplicate")
-                        if nickname == False:
-                            print("[D] " + print_source + " (" + vendor + ") ==> '" + ssid + "'")
-                        else:
-                            print("[D] " + print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                        print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
             else:
-                if nickname == False:
-                    print(print_source + " (" + vendor + ") ==> '" + ssid + "'")
-                else:
-                    print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> '" + ssid + "'")
+                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
         except KeyboardInterrupt:
             stop()
             exit()
@@ -255,11 +247,9 @@ def PrintPacket(pkt):
             pass
     else:
         if showBroadcasts:
-            if nickname == False:
-                print(print_source + " (" + vendor + ") ==> BROADCAST")
-            else:
-                print(print_source + " [" + str(nickname) + "]" + " (" + vendor + ") ==> BROADCAST")
+            print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
     statusWidget(len(devices))
+
 
 def SQLConncetor():
     try:
@@ -274,36 +264,34 @@ def SQLConncetor():
     except:
         debug("[!!!] CRASH IN SQLConncetor")
         debug(traceback.format_exc())
-        pass
+
 
 def checkSQLDuplicate(ssid, mac_add):
     try:
         debug("[1] checkSQLDuplicate called")
         cursor = SQLConncetor()
-        cursor.execute("select count(*) from probeSniffer where ssid = ? and mac_address = ?", (ssid, mac_add))
+        cursor.execute(
+            "select count(*) from probeSniffer where ssid = ? and mac_address = ?", (ssid, mac_add))
         data = cursor.fetchall()
         data = str(data)
         debug("[2] checkSQLDuplicate data: " + str(data))
         db.close()
-        if data == "[(0,)]":
-            return False
-        else:
-            return True
+        return data != "[(0,)]"
     except KeyboardInterrupt:
         stop()
         exit()
     except:
         debug("[!!!] CRASH IN checkSQLDuplicate")
         debug(traceback.format_exc())
-        pass
 
-def saveToMYSQL(mac_add, vendor, ssid):
+
+def saveToMYSQL(mac_add, vendor, ssid, rssi_in):
     try:
         debug("saveToMYSQL called")
         cursor = SQLConncetor()
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("INSERT INTO probeSniffer VALUES (?, ?, ?, ?)", (mac_add, vendor, ssid, st))
+        cursor.execute("INSERT INTO probeSniffer VALUES (?, ?, ?, ?,?)", (mac_add, vendor, ssid,  st, rssi_in))
         db.commit()
         db.close()
     except KeyboardInterrupt:
@@ -312,19 +300,22 @@ def saveToMYSQL(mac_add, vendor, ssid):
     except:
         debug("[!!!] CRASH IN saveToMYSQL")
         debug(traceback.format_exc())
-        pass
+
 
 def setNickname(mac, nickname):
     debug("setNickname called")
     cursor = SQLConncetor()
-    cursor.execute("INSERT INTO probeSnifferNicknames VALUES (?, ?)", (mac, nickname))
+    cursor.execute(
+        "INSERT INTO probeSnifferNicknames VALUES (?, ?)", (mac, nickname))
     db.commit()
     db.close()
+
 
 def getNickname(mac):
     debug("getNickname called")
     cursor = SQLConncetor()
-    cursor.execute("SELECT nickname FROM probeSnifferNicknames WHERE mac = ?", (mac,))
+    cursor.execute(
+        "SELECT nickname FROM probeSnifferNicknames WHERE mac = ?", (mac,))
     data = cursor.fetchone()
     db.close()
     if data == None:
@@ -352,9 +343,12 @@ def main():
                 setupCursor.execute("DROP TABLE probeSnifferNicknames")
                 print("\n[I] Nickname database flushed.\n")
             except:
-                print("\n[!] Cant flush nickname database, since its not created yet\n")
-        setupCursor.execute("CREATE TABLE IF NOT EXISTS probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50),date VARCHAR(50))")
-        setupCursor.execute("CREATE TABLE IF NOT EXISTS probeSnifferNicknames (mac VARCHAR(50),nickname VARCHAR(50))")
+                print(
+                    "\n[!] Cant flush nickname database, since its not created yet\n")
+        setupCursor.execute(
+            "CREATE TABLE IF NOT EXISTS probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50), date VARCHAR(50), rssi INT)")
+        setupCursor.execute(
+            "CREATE TABLE IF NOT EXISTS probeSnifferNicknames (mac VARCHAR(50),nickname VARCHAR(50))")
         setupDB.commit()
         setupDB.close()
 
@@ -415,6 +409,7 @@ def main():
         if not noSQL:
             print("[I] Results saved to 'DB-probeSniffer.db'")
         print("\n[I] probeSniffer stopped.")
+
 
 if __name__ == "__main__":
     main()

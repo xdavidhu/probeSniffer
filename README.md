@@ -33,6 +33,7 @@
   * <b>--nosql</b> / disable SQL logging completely<br>
   * <b>--debug</b> / turn debug mode on<br>
   * <b>-h</b> / display help menu<br>
+  * <b>-r</b> / display rssi<br>
 
 # installing:
 
