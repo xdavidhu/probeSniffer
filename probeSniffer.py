@@ -16,7 +16,7 @@ import argparse
 parser = argparse.ArgumentParser(
     usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
 parser.add_argument(
-    "interface", help='Interface (in monitor mode) for capturing the packets')
+    "interface", help='interface (in monitor mode) for capturing the packets')
 parser.add_argument("-d", action='store_true',
                     help='do not show duplicate requests')
 parser.add_argument("-b", action='store_true',
