@@ -190,7 +190,7 @@ def PrintPacket(pkt):
     ssid = pkt.getlayer(Dot11ProbeReq).info.decode("utf-8")
     rssi_val = None
     if rssi:
-        rssi_val = -(256 - ord(pkt.notdecoded[-4:-3]))
+        rssi_val = -(256 - ord(pkt.notdecoded[-2:-1]))
         debug("rssi value: " + str(rssi_val))
     if ssid == "":
         nossid = True
