@@ -52,6 +52,7 @@ debugMode = args.debug
 saveDuplicates = args.a
 filterMode = args.f != None
 rssi = args.rssi
+noresolve = args.noresolve
 if args.f != None:
     filterMac = args.f
 
@@ -219,7 +220,9 @@ def PrintPacket(pkt):
     print_source = pkt.addr2
     mac_address = print_source
     if not noresolve:
+        debug("resolving mac")
         vendor = resolveMac(mac_address)
+        debug("vendor query done")
     else:
         vendor = "RESOLVE-OFF"
     inDevices = False
@@ -228,7 +231,6 @@ def PrintPacket(pkt):
             inDevices = True
     if not inDevices:
         devices.append(mac_address)
-    debug("vendor request done")
     nickname = getNickname(print_source)
     if filterMode:
         if mac_address != filterMac:
