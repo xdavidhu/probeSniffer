@@ -178,7 +178,7 @@ def sniffer():
 def resolveMac(mac):
     try:
         global resolveObj
-        for macArray in obj:
+        for macArray in resolveObj:
             if macArray[0] == mac[:8].upper():
                 return macArray[1]
         return "RESOLVE-ERROR"
