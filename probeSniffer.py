@@ -401,9 +401,10 @@ def main():
 
     print("[I] Starting channelhopper in a new thread...")
     path = os.path.realpath(__file__)
-    chopper = threading.Thread(target=chopping)
-    chopper.daemon = True
-    chopper.start()
+    os.system("iwconfig " + monitor_iface + " channel  6" > /dev/null 2>&1")
+    #chopper = threading.Thread(target=chopping)
+    #chopper.daemon = True
+    #chopper.start()
     print("[I] Saving requests to 'DB-probeSniffer.db'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     statusWidget(len(devices))
