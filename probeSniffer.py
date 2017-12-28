@@ -25,15 +25,18 @@ parser.add_argument("-a", action='store_true',
                     help='save duplicate requests to SQL')
 parser.add_argument(
     "-f", type=str, help='only show requests from the specified mac address')
+parser.add_argument('-r', '--rssi', action='store_true',
+                    help="include rssi in output")
 parser.add_argument("--nosql", action='store_true',
                     help='disable SQL logging completely')
 parser.add_argument("--addnicks", action='store_true',
                     help='add nicknames to mac addresses')
 parser.add_argument("--flushnicks", action='store_true',
                     help='flush nickname database')
+parser.add_argument('--noresolve', action='store_true',
+                    help="skip resolving mac address")
 parser.add_argument("--debug", action='store_true', help='turn debug mode on')
-parser.add_argument('-r', '--rssi', action='store_true',
-                    help="include rssi in output")
+
 if len(sys.argv) == 1:
     parser.print_help()
     sys.exit(1)
@@ -164,6 +167,18 @@ def sniffer():
             debug("[SNIFFER] IM STOPPING TOO")
             sys.exit()
 
+def resolveMac(mac):
+    try:
+        script_path = os.path.dirname(os.path.realpath(__file__)) + "/"
+        with open(script_path + "oui.json", 'r') as content_file:
+            obj = content_file.read()
+        obj = json.loads(obj)
+        for macArray in obj:
+            if macArray[0] == mac[:8]:
+                return macArray[1]
+        return "RESOLVE-ERROR"
+    except:
+        return "RESOLVE-ERROR"
 
 def PacketHandler(pkt):
     try:
@@ -202,18 +217,10 @@ def PrintPacket(pkt):
     url = "https://macvendors.co/api/vendorname/"
     # Mac address to lookup vendor from
     mac_address = print_source
-    try:
-        debug("url request started")
-        request = urllib2.Request(
-            url + mac_address, headers={'User-Agent': "API Browser"})
-        response = urllib2.urlopen(request)
-        vendor = response.read()
-        vendor = vendor.decode("utf-8")
-    except KeyboardInterrupt:
-        stop()
-        exit()
-    except:
-        vendor = "No Vendor (INTERNET ERROR)"
+    if not noresolve:
+        vendor = resolveMac(mac_address)
+    else:
+        vendor = "RESOLVE-OFF"
     inDevices = False
     for device in devices:
         if device == mac_address:
@@ -234,7 +241,10 @@ def PrintPacket(pkt):
                     debug("saving to sql")
                     saveToMYSQL(mac_address, vendor, ssid, rssi_val)
                     debug("saved to sql")
-                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
+                    if not noresolve:
+                        print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
+                    else:
+                        print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
                 else:
                     if saveDuplicates:
                         debug("saveDuplicates on")
@@ -243,9 +253,15 @@ def PrintPacket(pkt):
                         debug("saved to sql")
                     if showDuplicates:
                         debug("duplicate")
-                        print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
+                        if not noresolve:
+                            print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
+                        else:
+                            print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
             else:
-                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
+                if not noresolve:
+                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
+                else:
+                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
         except KeyboardInterrupt:
             stop()
             exit()
@@ -253,7 +269,10 @@ def PrintPacket(pkt):
             pass
     else:
         if showBroadcasts:
-            print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
+            if not noresolve:
+                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
+            else:
+                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
     statusWidget(len(devices))
 
 
