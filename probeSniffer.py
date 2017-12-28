@@ -15,7 +15,6 @@ import threading
 from scapy.all import *
 import urllib.request as urllib2
 
-
 parser = argparse.ArgumentParser(
     usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
 parser.add_argument(
@@ -91,6 +90,11 @@ print("[W] Make sure to use an interface in monitor mode!\n")
 devices = []
 script_path = os.path.dirname(os.path.realpath(__file__))
 script_path = script_path + "/"
+
+print("[I] Loading MAC database...")
+with open(script_path + "oui.json", 'r') as content_file:
+    obj = content_file.read()
+resolveObj = json.loads(obj)
 
 externalOptionsSet = False
 if noSQL:
@@ -172,10 +176,7 @@ def sniffer():
 
 def resolveMac(mac):
     try:
-        script_path = os.path.dirname(os.path.realpath(__file__)) + "/"
-        with open(script_path + "oui.json", 'r') as content_file:
-            obj = content_file.read()
-        obj = json.loads(obj)
+        global resolveObj
         for macArray in obj:
             if macArray[0] == mac[:8]:
                 return macArray[1]
