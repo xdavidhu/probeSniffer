@@ -401,7 +401,7 @@ def main():
 
     print("[I] Starting channelhopper in a new thread...")
     path = os.path.realpath(__file__)
-    os.system("iwconfig " + monitor_iface + " channel  6" > /dev/null 2>&1")
+    os.system("iwconfig " + monitor_iface + " channel  6 > /dev/null 2>&1")
     #chopper = threading.Thread(target=chopping)
     #chopper.daemon = True
     #chopper.start()
