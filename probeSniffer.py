@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 # -.- coding: utf-8 -.-
 
-import os
-import time
-import sys
-import sqlite3
-import threading
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-from scapy.all import *
+
+import os
+import sys
+import time
+import json
+import sqlite3
 import datetime
-import urllib.request as urllib2
 import argparse
+import threading
+from scapy.all import *
+import urllib.request as urllib2
+
 
 parser = argparse.ArgumentParser(
     usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
