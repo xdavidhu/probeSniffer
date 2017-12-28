@@ -202,7 +202,6 @@ def PacketHandler(pkt):
         stop()
         exit()
 
-
 def PrintPacket(pkt):
     statusWidget(len(devices))
     debug("printpacket started")
@@ -218,8 +217,6 @@ def PrintPacket(pkt):
     else:
         nossid = False
     print_source = pkt.addr2
-    url = "https://macvendors.co/api/vendorname/"
-    # Mac address to lookup vendor from
     mac_address = print_source
     if not noresolve:
         vendor = resolveMac(mac_address)
