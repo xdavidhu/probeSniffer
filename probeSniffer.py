@@ -145,14 +145,13 @@ def debug(msg):
 def chopping():
     while True:
         if not alreadyStopping:
-            channel = 1
-            while channel <= 12:
+            channels = [1, 6, 11]
+            for channel in channels:
                 os.system("iwconfig " + monitor_iface + " channel " +
                           str(channel) + " > /dev/null 2>&1")
                 debug("[CHOPPER] HI IM RUNNING THIS COMMAND: " +
                       "iwconfig " + monitor_iface + " channel " + str(channel))
                 debug("[CHOPPER] HI I CHANGED CHANNEL TO " + str(channel))
-                channel = channel + 1
                 time.sleep(5)
         else:
             debug("[CHOPPER] IM STOPPING TOO")
@@ -401,10 +400,9 @@ def main():
 
     print("[I] Starting channelhopper in a new thread...")
     path = os.path.realpath(__file__)
-    os.system("iwconfig " + monitor_iface + " channel  6 > /dev/null 2>&1")
-    #chopper = threading.Thread(target=chopping)
-    #chopper.daemon = True
-    #chopper.start()
+    chopper = threading.Thread(target=chopping)
+    chopper.daemon = True
+    chopper.start()
     print("[I] Saving requests to 'DB-probeSniffer.db'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     statusWidget(len(devices))
