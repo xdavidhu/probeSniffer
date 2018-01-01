@@ -4,43 +4,56 @@
     |   _/|    /|  O  |     |    _\__  |  |  ||  ||  |_ |  |_|    _|    /   
     |  |  |    \|     |  O  |   [_/  \ |  |  ||  ||   _]|   _|   [_|    \   
     |  |  |  .  |     |     |     \    |  |  ||  ||  |  |  | |     |  .  \  
-    |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__| 
-                                           v2.1 by David Schütz (@xdavidhu)
+    |__|  |__|\_|\___/|_____|_____|\___|__|__|____|__|  |__| |_____|__|\__|
+                                           v3.0 by David Schütz (@xdavidhu)
 [![Build Status](https://travis-ci.org/xdavidhu/probeSniffer.svg?branch=master)](https://travis-ci.org/xdavidhu/probeSniffer)
 [![Compatibility](https://img.shields.io/badge/python-3.3%2C%203.4%2C%203.5%2C%203.6-brightgreen.svg)](https://github.com/xdavidhu/probeSniffer)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/xdavidhu/probeSniffer/blob/master/LICENSE)
 [![Stars](https://img.shields.io/github/stars/xdavidhu/probeSniffer.svg)](https://github.com/xdavidhu/probeSniffer)
 <h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
 
-# new in 2.1:
-  * Displaying the number of hosts<br>
-  * Logging to SQLite database file<br>
-  * Settable nickname for mac addresses<br>
-  * Options to filter output by mac address<br>
-  * Capturing 'boradcast' probe requests (without ssid)<br>
+# new in 3.0:
+  * Less packet drop<br>
+  * Offline / Faster vendor resolving<br>
+  * Way better performance on slower systems<br>
+  * Switching from scapy to tshark packet capture <br>
+  * Displaying / Logging BSSID's from probe requests (only if not broadcast)<br>
+
+# features:
+  * Capturing and displaying probe requests real time<br>
+  * Offline vendor resolving from MAC addresses<br>
+  * Displaying the number of devices nearby<br>
+  * Displaying the RSSIs of probe requests<br>
+  * Settable nicknames for mac addresses<br>
+  * Option to filter output by mac address<br>
+  * Displaying BSSIDs from probe requests<br>
+  * Capturing 'broadcast' probe requests (without ssid)<br>
+  * Logging the probe requests to an SQLite database file<br>
 
 # requirements:
   * Kali Linux / Raspbian with root privileges<br>
-  * Python3 & PIP3 (probeSniffer will install the dependenices)<br>
-  * A wireless card (capable for monitor mode) and one other internet connected interface (for vendor resolve)<br>
+  * Python3 & pip3 & tshark & pyshark<br>
+  * A wireless card (capable for monitor mode)<br>
 
 # options:
+  * <b>-h</b> / display the help message<br>
   * <b>-d</b> / do not show duplicate requests<br>
-  * <b>-b</b> / do not show broadcast requests<br>
+  * <b>-b</b> / do not show 'broadcast' requests (without ssid)<br>
+  * <b>-a</b> / save duplicate requests to SQL<br>
   * <b>-f</b> / only show requests from the specified mac address<br>
+  * <b>--norssi</b> / do not include RSSI in output<br>
+  * <b>--nosql</b> / disable SQL logging completely<br>
   * <b>--addnicks</b> / add nicknames to mac addresses<br>
   * <b>--flushnicks</b> / flush nickname database<br>
-  * <b>--nosql</b> / disable SQL logging completely<br>
+  * <b>--noresolve</b> / skip resolving mac address<br>
   * <b>--debug</b> / turn debug mode on<br>
-  * <b>-h</b> / display help menu<br>
-  * <b>-r</b> / display rssi<br>
 
 # installing:
 
   <h3>Kali Linux / Raspbian:</h3>
 
 ```
-$ sudo apt-get update && sudo apt-get install python3 python3-pip -y
+$ sudo apt-get update && sudo apt-get install python3 python3-pip tshark -y
 
 $ git clone https://github.com/xdavidhu/probeSniffer
 

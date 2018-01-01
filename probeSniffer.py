@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
 # -.- coding: utf-8 -.-
 
-import logging
-logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-
-import os
-import sys
-import time
-import json
-import sqlite3
-import datetime
-import argparse
-import threading
-from scapy.all import *
-import urllib.request as urllib2
+try:
+    import os
+    import sys
+    import time
+    import json
+    import pyshark
+    import sqlite3
+    import datetime
+    import argparse
+    import threading
+    import urllib.request as urllib2
+except KeyboardInterrupt:
+    print("\n[I] Stopping...")
+    raise SystemExit
+except:
+    print("[!] Failed to import the dependencies... " +\
+            "Please make sure to install all of the requirements " +\
+            "and try again.")
+    raise SystemExit
 
 parser = argparse.ArgumentParser(
-    usage="probeSniffer.py interface [-h] [-d] [-b] [--nosql] [--addnicks] [--flushnicks] [--debug]")
+    usage="probeSniffer.py [monitor-mode-interface] [options]")
 parser.add_argument(
     "interface", help='interface (in monitor mode) for capturing the packets')
 parser.add_argument("-d", action='store_true',
@@ -25,9 +31,9 @@ parser.add_argument("-b", action='store_true',
                     help='do not show \'broadcast\' requests (without ssid)')
 parser.add_argument("-a", action='store_true',
                     help='save duplicate requests to SQL')
-parser.add_argument(
-    "-f", type=str, help='only show requests from the specified mac address')
-parser.add_argument('-r', '--rssi', action='store_true',
+parser.add_argument("--filter", type=str,
+                    help='only show requests from the specified mac address')
+parser.add_argument('--norssi', action='store_true',
                     help="include rssi in output")
 parser.add_argument("--nosql", action='store_true',
                     help='disable SQL logging completely')
@@ -50,11 +56,11 @@ addNicks = args.addnicks
 flushNicks = args.flushnicks
 debugMode = args.debug
 saveDuplicates = args.a
-filterMode = args.f != None
-rssi = args.rssi
+filterMode = args.filter != None
+norssi = args.norssi
 noresolve = args.noresolve
-if args.f != None:
-    filterMac = args.f
+if args.filter != None:
+    filterMac = args.filter
 
 monitor_iface = args.interface
 alreadyStopping = False
@@ -66,7 +72,10 @@ def restart_line():
 
 
 def statusWidget(devices):
-    sys.stdout.write("Devices found: [" + str(devices) + "]")
+    if not filterMode:
+        sys.stdout.write("Devices found: [" + str(devices) + "]")
+    else:
+        sys.stdout.write("Devices found: [FILTER MODE]")
     restart_line()
     sys.stdout.flush()
 
@@ -82,9 +91,9 @@ header = """
 """
 
 try:
-    print(header + "                                       v2.1 by David Schütz (@xdavidhu)\n")
+    print(header + "                                       v3.0 by David Schütz (@xdavidhu)\n")
 except:
-    print(header + "                                                      v2.1 by @xdavidhu\n")
+    print(header + "                                                      v3.0 by @xdavidhu\n")
 
 print("[W] Make sure to use an interface in monitor mode!\n")
 
@@ -92,16 +101,11 @@ devices = []
 script_path = os.path.dirname(os.path.realpath(__file__))
 script_path = script_path + "/"
 
-print("[I] Loading MAC database...")
-with open(script_path + "oui.json", 'r') as content_file:
-    obj = content_file.read()
-resolveObj = json.loads(obj)
-
 externalOptionsSet = False
 if noSQL:
     externalOptionsSet = True
     print("[I] NO-SQL MODE!")
-if  not showDuplicates:
+if not showDuplicates:
     externalOptionsSet = True
     print("[I] Not showing duplicates...")
 if not showBroadcasts:
@@ -113,16 +117,22 @@ if filterMode:
 if saveDuplicates:
     externalOptionsSet = True
     print("[I] Saving duplicates to SQL...")
+if norssi:
+    externalOptionsSet = True
+    print("[I] Not showing RSSI values...")
+if noresolve:
+    externalOptionsSet = True
+    print("[I] Not resolving MAC addresses...")
+if debugMode:
+    externalOptionsSet = True
+    print("[I] Showing debug messages...")
 if externalOptionsSet:
     print()
 
-PROBE_REQUEST_TYPE = 0
-PROBE_REQUEST_SUBTYPE = 4
-
-if not noSQL:
-    # nosql
-    pass
-
+print("[I] Loading MAC database...")
+with open(script_path + "oui.json", 'r') as content_file:
+    obj = content_file.read()
+resolveObj = json.loads(obj)
 
 def stop():
     global alreadyStopping
@@ -133,8 +143,8 @@ def stop():
         print("\n[I] Stopping...")
         if not noSQL:
             print("[I] Results saved to 'DB-probeSniffer.db'")
-        print("\n[I] probeSniffer stopped.")
-        return
+        print("[I] probeSniffer stopped.")
+        raise SystemExit
 
 
 def debug(msg):
@@ -157,23 +167,6 @@ def chopping():
             debug("[CHOPPER] IM STOPPING TOO")
             sys.exit()
 
-
-def sniffer():
-    global alreadyStopping
-    while True:
-        if not alreadyStopping:
-            try:
-                debug("[SNIFFER] HI I STARTED TO SNIFF")
-                sniff(iface=monitor_iface, prn=PacketHandler, store=0)
-            except:
-                print("[!] An error occurred. Debug:")
-                print(traceback.format_exc())
-                print("[!] Restarting in 5 sec... Press CTRL + C to stop.")
-                time.sleep(5)
-        else:
-            debug("[SNIFFER] IM STOPPING TOO")
-            sys.exit()
-
 def resolveMac(mac):
     try:
         global resolveObj
@@ -184,40 +177,20 @@ def resolveMac(mac):
     except:
         return "RESOLVE-ERROR"
 
-def PacketHandler(pkt):
-    try:
-        debug("packethandler - called")
-        if pkt.haslayer(Dot11):
-            debug("packethandler - pkt.haslayer(Dot11)")
-            if pkt.type == PROBE_REQUEST_TYPE and pkt.subtype == PROBE_REQUEST_SUBTYPE:
-                debug("packethandler - if pkt.type")
-                PrintPacket(pkt)
-                debug("packethandler - printPacket called and done")
-    except KeyboardInterrupt:
-        debug("packethandler - keyboardinterrupt")
-        stop()
-        exit()
-    except:
-        debug("packethandler - exception")
-        stop()
-        exit()
-
-def PrintPacket(pkt):
+def packetHandler(pkt):
     statusWidget(len(devices))
-    debug("printpacket started")
-    ssid = pkt.getlayer(Dot11ProbeReq).info.decode("utf-8")
-    rssi_val = None
-    if rssi:
-        rssi_val = -(256 - ord(pkt.notdecoded[-2:-1]))
-        debug("rssi value: " + str(rssi_val))
-    if ssid == "":
-        nossid = True
-        debug("no ssid in request... skipping")
-        debug(str(pkt.addr2) + " " + str(pkt.addr1))
+    debug("packetHandler started")
+
+    nossid = False
+    if not str(pkt.wlan_mgt.tag) == "Tag: SSID parameter set: Broadcast":
+        ssid = pkt.wlan_mgt.ssid
     else:
-        nossid = False
-    print_source = pkt.addr2
-    mac_address = print_source
+        nossid = True
+
+    rssi_val = pkt.radiotap.dbm_antsignal
+    mac_address = pkt.wlan.ta
+    bssid = pkt.wlan.da
+
     if not noresolve:
         debug("resolving mac")
         vendor = resolveMac(mac_address)
@@ -230,7 +203,7 @@ def PrintPacket(pkt):
             inDevices = True
     if not inDevices:
         devices.append(mac_address)
-    nickname = getNickname(print_source)
+    nickname = getNickname(mac_address)
     if filterMode:
         if mac_address != filterMac:
             return
@@ -238,15 +211,15 @@ def PrintPacket(pkt):
         try:
             debug("sql duplicate check started")
             if not noSQL:
-                if not checkSQLDuplicate(ssid, mac_address):
+                if not checkSQLDuplicate(ssid, mac_address, bssid):
                     debug("not duplicate")
                     debug("saving to sql")
-                    saveToMYSQL(mac_address, vendor, ssid, rssi_val)
+                    saveToMYSQL(mac_address, vendor, ssid, rssi_val, bssid)
                     debug("saved to sql")
                     if not noresolve:
-                        print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
+                        print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if not norssi else "") +  " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
                     else:
-                        print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") +  " ==> '" + ssid + "'")
+                        print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if not norssi else "") +  " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
                 else:
                     if saveDuplicates:
                         debug("saveDuplicates on")
@@ -256,14 +229,14 @@ def PrintPacket(pkt):
                     if showDuplicates:
                         debug("duplicate")
                         if not noresolve:
-                            print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
+                            print("[D] " + mac_address + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if not norssi else "")  + " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
                         else:
-                            print("[D] " + print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "")  + " ==> '" + ssid + "'")
+                            print("[D] " + mac_address + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if not norssi else "")  + " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
             else:
                 if not noresolve:
-                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
+                    print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if not norssi else "") + " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
                 else:
-                    print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> '" + ssid + "'")
+                    print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if not norssi else "") + " ==> '" + ssid + "'" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
         except KeyboardInterrupt:
             stop()
             exit()
@@ -272,9 +245,9 @@ def PrintPacket(pkt):
     else:
         if showBroadcasts:
             if not noresolve:
-                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
+                print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + " (" + vendor + ")" + (" [" + str(rssi_val) + "]" if not norssi else "") + " ==> BROADCAST" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
             else:
-                print(print_source + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if rssi_val else "") + " ==> BROADCAST")
+                print(mac_address + (" [" + str(nickname) + "]" if nickname else "") + (" [" + str(rssi_val) + "]" if not norssi else "") + " ==> BROADCAST" + (" [BSSID: " + str(bssid) + "]" if not bssid == "ff:ff:ff:ff:ff:ff" else ""))
     statusWidget(len(devices))
 
 
@@ -293,12 +266,12 @@ def SQLConncetor():
         debug(traceback.format_exc())
 
 
-def checkSQLDuplicate(ssid, mac_add):
+def checkSQLDuplicate(ssid, mac_add, bssid):
     try:
         debug("[1] checkSQLDuplicate called")
         cursor = SQLConncetor()
         cursor.execute(
-            "select count(*) from probeSniffer where ssid = ? and mac_address = ?", (ssid, mac_add))
+            "select count(*) from probeSniffer where ssid = ? and mac_address = ? and bssid = ?", (ssid, mac_add, bssid))
         data = cursor.fetchall()
         data = str(data)
         debug("[2] checkSQLDuplicate data: " + str(data))
@@ -312,13 +285,13 @@ def checkSQLDuplicate(ssid, mac_add):
         debug(traceback.format_exc())
 
 
-def saveToMYSQL(mac_add, vendor, ssid, rssi_in):
+def saveToMYSQL(mac_add, vendor, ssid, rssi, bssid):
     try:
         debug("saveToMYSQL called")
         cursor = SQLConncetor()
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("INSERT INTO probeSniffer VALUES (?, ?, ?, ?,?)", (mac_add, vendor, ssid,  st, rssi_in))
+        cursor.execute("INSERT INTO probeSniffer VALUES (?, ?, ?, ?, ?, ?)", (mac_add, vendor, ssid,  st, rssi, bssid))
         db.commit()
         db.close()
     except KeyboardInterrupt:
@@ -373,7 +346,7 @@ def main():
                 print(
                     "\n[!] Cant flush nickname database, since its not created yet\n")
         setupCursor.execute(
-            "CREATE TABLE IF NOT EXISTS probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50), date VARCHAR(50), rssi INT)")
+            "CREATE TABLE IF NOT EXISTS probeSniffer (mac_address VARCHAR(50),vendor VARCHAR(50),ssid VARCHAR(50), date VARCHAR(50), rssi INT, bssid VARCHAR(50))")
         setupCursor.execute(
             "CREATE TABLE IF NOT EXISTS probeSnifferNicknames (mac VARCHAR(50),nickname VARCHAR(50))")
         setupDB.commit()
@@ -406,37 +379,21 @@ def main():
     print("[I] Saving requests to 'DB-probeSniffer.db'")
     print("\n[I] Sniffing started... Please wait for requests to show up...\n")
     statusWidget(len(devices))
-    snifferthread = threading.Thread(target=sniffer)
-    snifferthread.daemon = True
-    snifferthread.start()
-    try:
-        while not alreadyStopping:
-            pass
-    except KeyboardInterrupt:
-        alreadyStopping = True
-        print("\n[I] Stopping...")
-        if not noSQL:
-            print("[I] Results saved to 'DB-probeSniffer.db'")
-        print("\n[I] probeSniffer stopped.")
-    except OSError:
-        print("[!] An error occurred. Debug:")
-        print(traceback.format_exc())
-        print("[!] Restarting in 5 sec... Press CTRL + C to stop.")
+
+    while True:
         try:
-            time.sleep(5)
+            capture = pyshark.LiveCapture(interface=monitor_iface, bpf_filter='type mgt subtype probe-req')
+            capture.apply_on_packets(packetHandler)
+        except KeyboardInterrupt:
+            stop()
         except:
-            alreadyStopping = True
-            print("\n[I] Stopping...")
-            if not noSQL:
-                print("[I] Results saved to 'DB-probeSniffer.db'")
-            print("\n[I] probeSniffer stopped.")
-
-    if not alreadyStopping:
-        print("\n[I] Stopping...")
-        if not noSQL:
-            print("[I] Results saved to 'DB-probeSniffer.db'")
-        print("\n[I] probeSniffer stopped.")
-
+            print("[!] An error occurred. Debug:")
+            print(traceback.format_exc())
+            print("[!] Restarting in 5 sec... Press CTRL + C to stop.")
+            try:
+                time.sleep(5)
+            except:
+                stop()
 
 if __name__ == "__main__":
     main()
