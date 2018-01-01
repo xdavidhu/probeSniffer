@@ -4,5 +4,5 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-install: "sudo apt update && sudo apt install tshark -y && sudo python3 -m pip install -r requirements.txt"
+install: "sudo apt update && sudo apt install tshark python3-pip -y && sudo python3 -m pip install -r requirements.txt"
 script: sudo ./probeSniffer.py -h
