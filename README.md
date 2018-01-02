@@ -40,7 +40,7 @@
   * <b>-d</b> / do not show duplicate requests<br>
   * <b>-b</b> / do not show 'broadcast' requests (without ssid)<br>
   * <b>-a</b> / save duplicate requests to SQL<br>
-  * <b>-f</b> / only show requests from the specified mac address<br>
+  * <b>--filter</b> / only show requests from the specified mac address<br>
   * <b>--norssi</b> / do not include RSSI in output<br>
   * <b>--nosql</b> / disable SQL logging completely<br>
   * <b>--addnicks</b> / add nicknames to mac addresses<br>
