@@ -182,11 +182,19 @@ def packetHandler(pkt):
     statusWidget(len(devices))
     debug("packetHandler started")
 
-    nossid = False
-    if not str(pkt.wlan_mgt.tag) == "Tag: SSID parameter set: Broadcast":
-        ssid = pkt.wlan_mgt.ssid
+    if "wlan_mgt" in pkt:
+        nossid = False
+        if not str(pkt.wlan_mgt.tag)[:34] == "Tag: SSID parameter set: Broadcast":
+            ssid = pkt.wlan_mgt.ssid
+        else:
+            nossid = True
     else:
-        nossid = True
+        nossid = False
+        if not str(pkt[3].tag)[:34] == "Tag: SSID parameter set: Broadcast":
+            ssid = pkt[3].ssid
+        else:
+            nossid = True
+
 
     rssi_val = pkt.radiotap.dbm_antsignal
     mac_address = pkt.wlan.ta
