@@ -10,6 +10,9 @@
 [![Compatibility](https://img.shields.io/badge/python-3.3%2C%203.4%2C%203.5%2C%203.6-brightgreen.svg)](https://github.com/xdavidhu/probeSniffer)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/xdavidhu/probeSniffer/blob/master/LICENSE)
 [![Stars](https://img.shields.io/github/stars/xdavidhu/probeSniffer.svg)](https://github.com/xdavidhu/probeSniffer)
+
+### ⚠️ Warning! This project is no longer maintained and may not work as excepted.
+
 <h3>A tool for sniffing unencrypted wireless probe requests from devices</h3>
 
 # new in 3.0:
